@@ -32,7 +32,7 @@ const App = () => {
   onCleanup(() => clearInterval(timer));
 
   return (
-    <div>
+    <>
       <h1>{Math.floor(state.time / 60) + ":" + ((state.time % 60) + "").padStart(2, "0")}</h1>
       <div>
         <button
@@ -90,7 +90,7 @@ const App = () => {
           </div>
         )}
       </For>
-    </div>
+    </>
   );
 };
 
