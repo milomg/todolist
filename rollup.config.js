@@ -1,6 +1,7 @@
 import resolve from "@rollup/plugin-node-resolve";
 import babel from "rollup-plugin-babel";
 import { terser } from "rollup-plugin-terser";
+import copy from 'rollup-plugin-copy';
 
 const extensions = [".js", ".jsx", ".ts", ".tsx"];
 
@@ -11,6 +12,11 @@ const plugins = [
     extensions: extensions,
   }),
   resolve({ extensions: extensions }),
+  copy({
+    targets: [
+      { src: 'public/**/*', dest: 'dist' },
+    ]
+  })
 ];
 
 if (process.env.production) {
