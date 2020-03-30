@@ -1,0 +1,5 @@
+@import "bulma/css/bulma.min.css";
+
+input[type="checkbox"] {
+  transform: scale(3) translate(-5px, 1.5px);
+}
