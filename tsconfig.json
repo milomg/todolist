@@ -11,10 +11,8 @@
     "jsx": "preserve",
     "typeRoots": [
       "./node_modules/@types",
-      "./node_modules/babel-plugin-jsx-dom-expressions",
+      "./node_modules/babel-plugin-jsx-dom-expressions"
     ]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
