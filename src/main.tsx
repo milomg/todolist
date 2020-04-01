@@ -54,7 +54,7 @@ const App = () => {
     newTitle: "",
     todos: [] as Todo[],
     nextId: 0,
-    paused: undefined as undefined | number,
+    paused: -1,
     displayedNotification: false,
   });
   const [toggle, setToggle] = createSignal(false);
@@ -63,7 +63,7 @@ const App = () => {
   const tick = () => {
     console.log(posmod(state.time.getTime() - Date.now(), 1000));
     setToggle(!toggle());
-    if (state.paused == undefined && Date.now() >= state.time.getTime()) {
+    if (state.paused == -1 && Date.now() >= state.time.getTime()) {
       if (!state.displayedNotification) {
         setState("displayedNotification", true);
         new Notification("The timer is up!");
@@ -78,7 +78,7 @@ const App = () => {
     timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
   };
 
-  if (state.paused == undefined) tick();
+  if (state.paused == -1) tick();
   onCleanup(() => clearTimeout(timer!));
 
   return (
@@ -87,16 +87,16 @@ const App = () => {
         <div class="hero-body">
           <div class="container has-text-centered">
             <h1 class="title is-1">
-              {state.paused != undefined ? displaySecs(state.paused) : [toggle(), deltaDisplay(state.time)][1]}
+              {state.paused != -1 ? displaySecs(state.paused) : [toggle(), deltaDisplay(state.time)][1]}
             </h1>
             <div class="field has-addons has-addons-centered">
               <div class="control">
                 <button
                   class="button"
                   onClick={() => {
-                    if (state.paused != undefined) {
+                    if (state.paused != -1) {
                       setState("time", addSeconds(state.paused));
-                      setState("paused", undefined);
+                      setState("paused", -1);
                       clearTimeout(timer!);
                       tick();
                     } else {
@@ -106,7 +106,7 @@ const App = () => {
                     }
                   }}
                 >
-                  {state.paused == undefined ? "Pause" : "Play"}
+                  {state.paused == -1 ? "Pause" : "Play"}
                 </button>
               </div>
               <div class="control">
