@@ -78,7 +78,7 @@ const App = () => {
     timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
   };
 
-  if (state.paused != undefined) tick();
+  if (state.paused == undefined) tick();
   onCleanup(() => clearTimeout(timer!));
 
   return (
