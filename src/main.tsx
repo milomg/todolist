@@ -79,9 +79,7 @@ const App = () => {
   };
 
   if (state.paused != undefined) {
-    timer = setTimeout(() => {
-      tick();
-    }, posmod(state.time.getTime() - Date.now(), 1000));
+    tick();
   }
   onCleanup(() => clearTimeout(timer!));
 
@@ -102,9 +100,7 @@ const App = () => {
                       setState("time", addSeconds(state.paused));
                       setState("paused", undefined);
                       clearTimeout(timer!);
-                      timer = setTimeout(() => {
-                        tick();
-                      }, posmod(state.time.getTime() - Date.now(), 1000));
+                      tick();
                     } else {
                       setState("paused", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
                       clearTimeout(timer!);
