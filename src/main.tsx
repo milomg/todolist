@@ -78,9 +78,7 @@ const App = () => {
     timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
   };
 
-  if (state.paused != undefined) {
-    tick();
-  }
+  if (state.paused != undefined) tick();
   onCleanup(() => clearTimeout(timer!));
 
   return (
@@ -152,7 +150,7 @@ const App = () => {
                 class="button is-info"
                 onClick={() => {
                   setState((s) => {
-                    s.todos.push({
+                    s.todos.unshift({
                       title: state.newTitle,
                       done: false,
                       id: s.nextId,
@@ -172,7 +170,7 @@ const App = () => {
                 <div class="control">
                   <div
                     class="button"
-                    onClick={(e) => {
+                    onClick={() => {
                       const idx = state.todos.findIndex((t) => t.id === todo.id);
                       setState("todos", idx, "done", (done: boolean) => !done);
                     }}
