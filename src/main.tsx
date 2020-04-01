@@ -33,16 +33,16 @@ function beep() {
 }
 
 function addSeconds(s: number): Date {
-  return new Date(Date.now() + s * 1000 - 1);
+  return new Date(Date.now() + s * 1000);
 }
 function deltaDisplay(d: Date): string {
-  let now = Math.max(d.getTime() - Date.now() + 1000, 0);
-  let seconds = Math.floor(now / 1000) % 60;
-  let min = Math.floor(now / 60000) % 60;
-  return min + ":" + (seconds + "").padStart(2, "0");
+  let now = Math.max(d.getTime() - Date.now(), 0);
+  let sec = Math.ceil(now / 1000);
+  let min = Math.floor(sec / 60);
+  return min + ":" + ((sec % 60) + "").padStart(2, "0");
 }
 function displaySecs(s: number): string {
-  return Math.floor(s / 60) + ":" + (Math.floor(s % 60) + "").padStart(2, "0");
+  return Math.floor(Math.ceil(s) / 60) + ":" + ((Math.ceil(s) % 60) + "").padStart(2, "0");
 }
 function posmod(n: number, m: number): number {
   return ((n % m) + m) % m;
@@ -58,7 +58,10 @@ const App = () => {
     displayedNotification: false,
   });
   const [toggle, setToggle] = createSignal(false);
+
+  let timer: NodeJS.Timeout | undefined = undefined;
   const tick = () => {
+    console.log(posmod(state.time.getTime() - Date.now(), 1000));
     setToggle(!toggle());
     if (state.paused == undefined && Date.now() >= state.time.getTime()) {
       if (!state.displayedNotification) {
@@ -71,13 +74,16 @@ const App = () => {
       setTimeout(() => beep(), 400);
       setTimeout(() => beep(), 600);
     }
+    let offset = posmod(state.time.getTime() - Date.now(), 1000);
+    timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
   };
 
-  let timer: NodeJS.Timeout | undefined = undefined;
-  setTimeout(() => {
-    if (!timer) timer = setInterval(tick, 1000);
-  }, posmod(state.time.getTime() - Date.now(), 1000));
-  onCleanup(() => clearInterval(timer!));
+  if (state.paused != undefined) {
+    timer = setTimeout(() => {
+      tick();
+    }, posmod(state.time.getTime() - Date.now(), 1000));
+  }
+  onCleanup(() => clearTimeout(timer!));
 
   return (
     <>
@@ -95,10 +101,14 @@ const App = () => {
                     if (state.paused != undefined) {
                       setState("time", addSeconds(state.paused));
                       setState("paused", undefined);
-                      clearInterval(timer!);
-                      timer = setInterval(tick, 1000);
+                      clearTimeout(timer!);
+                      timer = setTimeout(() => {
+                        tick();
+                      }, posmod(state.time.getTime() - Date.now(), 1000));
                     } else {
                       setState("paused", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
+                      clearTimeout(timer!);
+                      timer = undefined;
                     }
                   }}
                 >
@@ -109,8 +119,10 @@ const App = () => {
                 <button
                   class="button"
                   onClick={() => {
-                    setState("paused", 10);
+                    setState("paused", 10 * 60);
                     setState("displayedNotification", false);
+                    clearTimeout(timer!);
+                    timer = undefined;
                   }}
                 >
                   Reset
