@@ -7,7 +7,7 @@ function createLocalState<T>(initState: T): [Wrapped<T>, SetStateFunction<T>] {
   const [state, setState] = createState(initState);
   if (localStorage.todos) {
     let parsed = JSON.parse(localStorage.todos);
-    parsed.time = new Date(parsed.time);
+    if (typeof parsed.time == "string") parsed.time = new Date(parsed.time);
     setState(parsed);
   }
   createEffect(() => (localStorage.todos = JSON.stringify(state)));
@@ -47,23 +47,25 @@ function displaySecs(s: number): string {
 function posmod(n: number, m: number): number {
   return ((n % m) + m) % m;
 }
+function isPaused(t: Time): t is number {
+  return typeof t == "number";
+}
+type Time = Date | number;
 type Todo = { title: string; done: boolean; id: number };
 const App = () => {
   const [state, setState] = createLocalState({
-    time: addSeconds(25 * 60),
+    time: addSeconds(25 * 60) as Time,
     newTitle: "",
     todos: [] as Todo[],
     nextId: 0,
-    paused: -1,
     displayedNotification: false,
   });
   const [toggle, setToggle] = createSignal(false);
 
   let timer: NodeJS.Timeout | undefined = undefined;
   const tick = () => {
-    console.log(posmod(state.time.getTime() - Date.now(), 1000));
     setToggle(!toggle());
-    if (state.paused == -1 && Date.now() >= state.time.getTime()) {
+    if (!isPaused(state.time) && Date.now() >= state.time.getTime()) {
       if (!state.displayedNotification) {
         setState("displayedNotification", true);
         new Notification("The timer is up!");
@@ -74,11 +76,13 @@ const App = () => {
       setTimeout(() => beep(), 400);
       setTimeout(() => beep(), 600);
     }
-    let offset = posmod(state.time.getTime() - Date.now(), 1000);
-    timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
+    if (!isPaused(state.time)) {
+      let offset = posmod(state.time.getTime() - Date.now(), 1000);
+      timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
+    } else timer = undefined;
   };
 
-  if (state.paused == -1) tick();
+  if (!isPaused(state.time)) tick();
   onCleanup(() => clearTimeout(timer!));
 
   return (
@@ -86,43 +90,36 @@ const App = () => {
       <section class="hero">
         <div class="hero-body">
           <div class="container has-text-centered">
-            <h1 class="title is-1">
-              {state.paused != -1 ? displaySecs(state.paused) : [toggle(), deltaDisplay(state.time)][1]}
-            </h1>
+            <h1 class="title is-1">{isPaused(state.time) ? displaySecs(state.time) : [toggle(), deltaDisplay(state.time)][1]}</h1>
             <div class="field has-addons has-addons-centered">
               <div class="control">
                 <button
                   class="button"
                   onClick={() => {
-                    if (state.paused != -1) {
-                      setState("time", addSeconds(state.paused));
-                      setState("paused", -1);
+                    if (isPaused(state.time)) {
+                      setState("time", addSeconds(state.time));
                       clearTimeout(timer!);
                       tick();
                     } else {
-                      setState("paused", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
-                      clearTimeout(timer!);
-                      timer = undefined;
+                      setState("time", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
                     }
                   }}
                 >
-                  {state.paused == -1 ? "Pause" : "Play"}
+                  {isPaused(state.time) ? "Play" : "Pause"}
                 </button>
               </div>
               <div class="control">
                 <button
                   class="button"
                   onClick={() => {
-                    setState("paused", 10 * 60);
+                    setState("time", 10 * 60);
                     setState("displayedNotification", false);
-                    clearTimeout(timer!);
-                    timer = undefined;
                   }}
                 >
                   Reset
                 </button>
               </div>
-              <Show when={!state.paused && state.time.getTime() <= Date.now()}>
+              <Show when={isPaused(state.time) ? state.time <= 0 : state.time.getTime() <= Date.now()}>
                 <div class="control">
                   <button class="button" onClick={() => setState("todos", [])}>
                     Clear Todos
@@ -134,69 +131,71 @@ const App = () => {
         </div>
       </section>
       <section class="section">
-        <div class="container">
-          <div class="field has-addons has-addons-centered">
-            <div class="control">
-              <input
-                type="text"
-                class="input"
-                placeholder="enter a todo and click +"
-                value={state.newTitle}
-                onInput={(e) => setState({ newTitle: e.target.value })}
-              ></input>
-            </div>
-            <div class="control">
-              <a
-                class="button is-info"
-                onClick={() => {
-                  setState((s) => {
-                    s.todos.unshift({
-                      title: state.newTitle,
-                      done: false,
-                      id: s.nextId,
+        <div class="columns is-centered">
+          <div class="column is-narrow" style="width: 340px">
+            <div class="field has-addons has-addons-centered">
+              <div class="control is-expanded">
+                <input
+                  type="text"
+                  class="input is-fullwidth"
+                  placeholder="enter a todo and click +"
+                  value={state.newTitle}
+                  onInput={(e) => setState({ newTitle: e.target.value })}
+                ></input>
+              </div>
+              <div class="control">
+                <a
+                  class="button is-info"
+                  onClick={() => {
+                    setState((s) => {
+                      s.todos.unshift({
+                        title: state.newTitle,
+                        done: false,
+                        id: s.nextId,
+                      });
+                      s.newTitle = "";
+                      s.nextId++;
                     });
-                    s.newTitle = "";
-                    s.nextId++;
-                  });
-                }}
-              >
-                +
-              </a>
+                  }}
+                >
+                  +
+                </a>
+              </div>
             </div>
-          </div>
-          <For each={state.todos}>
-            {(todo) => (
-              <div class="field has-addons has-addons-centered">
-                <div class="control">
-                  <div
-                    class="button"
-                    onClick={() => {
-                      const idx = state.todos.findIndex((t) => t.id === todo.id);
-                      setState("todos", idx, "done", (done: boolean) => !done);
-                    }}
-                  >
-                    <input type="checkbox" checked={todo.done}></input>
+            <For each={state.todos}>
+              {(todo) => (
+                <div class="field has-addons has-addons-centered">
+                  <div class="control">
+                    <div
+                      class="button"
+                      onClick={() => {
+                        const idx = state.todos.findIndex((t) => t.id === todo.id);
+                        setState("todos", idx, "done", (done: boolean) => !done);
+                      }}
+                    >
+                      <input type="checkbox" checked={todo.done}></input>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <input
+                      type="text"
+                      class="input"
+                      value={todo.title}
+                      onInput={(e) => {
+                        const idx = state.todos.findIndex((t) => t.id === todo.id);
+                        setState("todos", idx, { title: e.target.value });
+                      }}
+                    ></input>
+                  </div>
+                  <div class="control">
+                    <button class="button" onClick={() => setState("todos", (t) => t.filter((t) => t.id !== todo.id))}>
+                      x
+                    </button>
                   </div>
                 </div>
-                <div class="control">
-                  <input
-                    type="text"
-                    class="input"
-                    value={todo.title}
-                    onInput={(e) => {
-                      const idx = state.todos.findIndex((t) => t.id === todo.id);
-                      setState("todos", idx, { title: e.target.value });
-                    }}
-                  ></input>
-                </div>
-                <div class="control">
-                  <button class="button" onClick={() => setState("todos", (t) => t.filter((t) => t.id !== todo.id))}>
-                    x
-                  </button>
-                </div>
-              </div>
-            )}
-          </For>
+              )}
+            </For>
+          </div>
         </div>
       </section>
     </>
