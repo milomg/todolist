@@ -1,6 +1,6 @@
 import "./style.css";
 import { onCleanup, createState, createEffect, createSignal } from "solid-js";
-import { render, For, Show } from "solid-js/dom";
+import { render, For } from "solid-js/dom";
 import { SetStateFunction, Wrapped } from "solid-js/types/state";
 
 function createLocalState<T>(initState: T): [Wrapped<T>, SetStateFunction<T>] {
@@ -85,16 +85,35 @@ const App = () => {
   if (!isPaused(state.time)) tick();
   onCleanup(() => clearTimeout(timer!));
 
+  let createButton = (time: number) => (
+    <div class="control">
+      <button
+        class="button is-info is-light"
+        onClick={() => {
+          setState("time", time * 60);
+          setState("displayedNotification", false);
+        }}
+      >
+        {time} minutes
+      </button>
+    </div>
+  );
+
   return (
     <>
       <section class="hero">
         <div class="hero-body">
           <div class="container has-text-centered">
+            <div class="field has-addons has-addons-centered">
+              {createButton(25)}
+              {createButton(10)}
+              {createButton(5)}
+            </div>
             <h1 class="title is-1">{isPaused(state.time) ? displaySecs(state.time) : [toggle(), deltaDisplay(state.time)][1]}</h1>
             <div class="field has-addons has-addons-centered">
               <div class="control">
                 <button
-                  class="button"
+                  class={`button ${isPaused(state.time) ? "is-success" : "is-info"}`}
                   onClick={() => {
                     if (isPaused(state.time)) {
                       setState("time", addSeconds(state.time));
@@ -108,24 +127,6 @@ const App = () => {
                   {isPaused(state.time) ? "Play" : "Pause"}
                 </button>
               </div>
-              <div class="control">
-                <button
-                  class="button"
-                  onClick={() => {
-                    setState("time", 10 * 60);
-                    setState("displayedNotification", false);
-                  }}
-                >
-                  Reset
-                </button>
-              </div>
-              <Show when={isPaused(state.time) ? state.time <= 0 : state.time.getTime() <= Date.now()}>
-                <div class="control">
-                  <button class="button" onClick={() => setState("todos", [])}>
-                    Clear Todos
-                  </button>
-                </div>
-              </Show>
             </div>
           </div>
         </div>
@@ -168,6 +169,7 @@ const App = () => {
                   <div class="control">
                     <div
                       class="button"
+                      classList={{ disabled: todo.done }}
                       onClick={() => {
                         const idx = state.todos.findIndex((t) => t.id === todo.id);
                         setState("todos", idx, "done", (done: boolean) => !done);
@@ -180,6 +182,10 @@ const App = () => {
                     <input
                       type="text"
                       class="input"
+                      classList={{
+                        disabled: todo.done,
+                        strikethrough: todo.done,
+                      }}
                       value={todo.title}
                       onInput={(e) => {
                         const idx = state.todos.findIndex((t) => t.id === todo.id);
@@ -188,7 +194,11 @@ const App = () => {
                     ></input>
                   </div>
                   <div class="control">
-                    <button class="button" onClick={() => setState("todos", (t) => t.filter((t) => t.id !== todo.id))}>
+                    <button
+                      class="button"
+                      classList={{ disabled: todo.done }}
+                      onClick={() => setState("todos", (t) => t.filter((t) => t.id !== todo.id))}
+                    >
                       x
                     </button>
                   </div>

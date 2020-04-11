@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "build": "rollup -c -w",
-    "prod": "rollup -c --environment production"
+    "start": "rollup -c -w",
+    "build": "rollup -c --environment production"
   },
   "author": "",
   "license": "ISC",
