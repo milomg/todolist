@@ -1,9 +1,9 @@
 import "./style.css";
 import { onCleanup, createState, createEffect, createSignal } from "solid-js";
 import { render, For } from "solid-js/dom";
-import { SetStateFunction, Wrapped } from "solid-js/types/state";
+import { SetStateFunction, State } from "solid-js/types";
 
-function createLocalState<T>(initState: T): [Wrapped<T>, SetStateFunction<T>] {
+function createLocalState<T>(initState: T): [State<T>, SetStateFunction<T>] {
   const [state, setState] = createState(initState);
   if (localStorage.todos) {
     let parsed = JSON.parse(localStorage.todos);
@@ -16,21 +16,6 @@ function createLocalState<T>(initState: T): [Wrapped<T>, SetStateFunction<T>] {
 
 Notification.requestPermission();
 const a = new AudioContext();
-
-function beep() {
-  const duration = 0.05;
-  const v = a.createOscillator();
-  const u = a.createGain();
-  v.connect(u);
-  v.frequency.value = 1200;
-  v.type = "square";
-  u.connect(a.destination);
-  u.gain.value = 0.1;
-  u.gain.setValueAtTime(0.1, a.currentTime + duration);
-  u.gain.linearRampToValueAtTime(0, a.currentTime + duration + 0.05);
-  v.start(a.currentTime);
-  v.stop(a.currentTime + duration + 0.05);
-}
 
 function addSeconds(s: number): Date {
   return new Date(Date.now() + s * 1000);
@@ -51,18 +36,34 @@ function isPaused(t: Time): t is number {
   return typeof t == "number";
 }
 type Time = Date | number;
-type Todo = { title: string; done: boolean; id: number };
+type Todo = { title: string; done: boolean };
 const App = () => {
   const [state, setState] = createLocalState({
     time: addSeconds(25 * 60) as Time,
     newTitle: "",
     todos: [] as Todo[],
-    nextId: 0,
     displayedNotification: false,
   });
   const [toggle, setToggle] = createSignal(false);
 
   let timer: NodeJS.Timeout | undefined = undefined;
+
+  function beep() {
+    if (isPaused(state.time)) return;
+    const duration = 0.05;
+    const v = a.createOscillator();
+    const u = a.createGain();
+    v.connect(u);
+    v.frequency.value = 1200;
+    v.type = "square";
+    u.connect(a.destination);
+    u.gain.value = 0.1;
+    u.gain.setValueAtTime(0.1, a.currentTime + duration);
+    u.gain.linearRampToValueAtTime(0, a.currentTime + duration + 0.05);
+    v.start(a.currentTime);
+    v.stop(a.currentTime + duration + 0.05);
+  }
+
   const tick = () => {
     setToggle(!toggle());
     if (!isPaused(state.time) && Date.now() >= state.time.getTime()) {
@@ -85,10 +86,10 @@ const App = () => {
   if (!isPaused(state.time)) tick();
   onCleanup(() => clearTimeout(timer!));
 
-  let createButton = (time: number) => (
+  let createButton = (time: number, classes: string) => (
     <div class="control">
       <button
-        class="button is-info is-light"
+        class={`bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-4 ${classes}`}
         onClick={() => {
           setState("time", time * 60);
           setState("displayedNotification", false);
@@ -99,114 +100,88 @@ const App = () => {
     </div>
   );
 
+  let addTodo = () => {
+    setState((s) => ({
+      todos: [
+        {
+          title: s.newTitle,
+          done: false,
+        },
+        ...s.todos,
+      ],
+      newTitle: "",
+    }));
+  };
+
   return (
     <>
-      <section class="hero">
-        <div class="hero-body">
-          <div class="container has-text-centered">
-            <div class="field has-addons has-addons-centered">
-              {createButton(25)}
-              {createButton(10)}
-              {createButton(5)}
-            </div>
-            <h1 class="title is-1">{isPaused(state.time) ? displaySecs(state.time) : [toggle(), deltaDisplay(state.time)][1]}</h1>
-            <div class="field has-addons has-addons-centered">
-              <div class="control">
-                <button
-                  class={`button ${isPaused(state.time) ? "is-success" : "is-info"}`}
-                  onClick={() => {
-                    if (isPaused(state.time)) {
-                      setState("time", addSeconds(state.time));
-                      clearTimeout(timer!);
-                      tick();
-                    } else {
-                      setState("time", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
-                    }
-                  }}
-                >
-                  {isPaused(state.time) ? "Play" : "Pause"}
-                </button>
-              </div>
-            </div>
-          </div>
+      <section class="container mx-auto text-center">
+        <div class="inline-flex">
+          {createButton(25, "rounded-l")}
+          {createButton(10, "")}
+          {createButton(5, "rounded-r")}
         </div>
+        <h1 style="font-size:6rem;font-weight:600;">{isPaused(state.time) ? displaySecs(state.time) : [toggle(), deltaDisplay(state.time)][1]}</h1>
+        <button
+          class={`text-white py-2 px-4 rounded ${isPaused(state.time) ? "bg-green-500 hover:bg-green-700" : "bg-blue-500 hover:bg-blue-700"}`}
+          onClick={() => {
+            if (isPaused(state.time)) {
+              setState("time", addSeconds(state.time));
+              clearTimeout(timer!);
+              tick();
+            } else {
+              setState("time", Math.max((state.time.getTime() - Date.now()) / 1000, 0));
+            }
+          }}
+        >
+          {isPaused(state.time) ? "Play" : "Pause"}
+        </button>
       </section>
-      <section class="section">
-        <div class="columns is-centered">
-          <div class="column is-narrow" style="width: 340px">
-            <div class="field has-addons has-addons-centered">
-              <div class="control is-expanded">
-                <input
-                  type="text"
-                  class="input is-fullwidth"
-                  placeholder="enter a todo and click +"
-                  value={state.newTitle}
-                  onInput={(e) => setState({ newTitle: e.target.value })}
-                ></input>
-              </div>
-              <div class="control">
-                <a
-                  class="button is-info"
-                  onClick={() => {
-                    setState((s) => {
-                      s.todos.unshift({
-                        title: state.newTitle,
-                        done: false,
-                        id: s.nextId,
-                      });
-                      s.newTitle = "";
-                      s.nextId++;
-                    });
-                  }}
-                >
-                  +
-                </a>
-              </div>
-            </div>
-            <For each={state.todos}>
-              {(todo) => (
-                <div class="field has-addons has-addons-centered">
-                  <div class="control">
-                    <div
-                      class="button"
-                      classList={{ disabled: todo.done }}
-                      onClick={() => {
-                        const idx = state.todos.findIndex((t) => t.id === todo.id);
-                        setState("todos", idx, "done", (done: boolean) => !done);
-                      }}
-                    >
-                      <input type="checkbox" checked={todo.done}></input>
-                    </div>
-                  </div>
-                  <div class="control">
-                    <input
-                      type="text"
-                      class="input"
-                      classList={{
-                        disabled: todo.done,
-                        strikethrough: todo.done,
-                      }}
-                      value={todo.title}
-                      onInput={(e) => {
-                        const idx = state.todos.findIndex((t) => t.id === todo.id);
-                        setState("todos", idx, { title: e.target.value });
-                      }}
-                    ></input>
-                  </div>
-                  <div class="control">
-                    <button
-                      class="button"
-                      classList={{ disabled: todo.done }}
-                      onClick={() => setState("todos", (t) => t.filter((t) => t.id !== todo.id))}
-                    >
-                      x
-                    </button>
-                  </div>
-                </div>
-              )}
-            </For>
-          </div>
+      <section class="container mx-auto text-center" style="width: 340px">
+        <div class="inline-flex w-full pt-4 pb-4">
+          <input
+            type="text"
+            class="appearance-none border rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border border-gray-500 hover:border-gray-600"
+            placeholder="enter a todo and click +"
+            value={state.newTitle}
+            onKeyDown={(e) => e.key == "Enter" && addTodo()}
+            onInput={(e) => setState({ newTitle: e.target.value })}
+          ></input>
+          <button class="text-white py-2 px-4 rounded-r bg-blue-500 hover:bg-blue-700" onClick={addTodo}>
+            +
+          </button>
         </div>
+        <For each={state.todos}>
+          {(todo, idx) => (
+            <div class="inline-flex w-full" style="margin-bottom:-1px">
+              <div
+                class="text-black py-2 px-4 rounded-l border border-gray-500 hover:border-gray-600"
+                classList={{ "bg-gray-200": todo.done }}
+                onClick={() => setState("todos", idx(), "done", (done) => !done)}
+              >
+                <input type="checkbox" checked={todo.done}></input>
+              </div>
+              <input
+                type="text"
+                class="appearance-none border border-gray-500 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline hover:border-gray-600"
+                classList={{
+                  "bg-gray-200": todo.done,
+                  "line-through": todo.done,
+                }}
+                style="margin-left:-1px;margin-right:-1px;"
+                value={todo.title}
+                onInput={(e) => setState("todos", idx(), { title: e.target.value })}
+              ></input>
+              <button
+                class="text-black py-2 px-4 rounded-r border border-gray-500 hover:border-gray-600"
+                classList={{ "bg-gray-200": todo.done }}
+                onClick={() => setState("todos", (t) => [...t.slice(0, idx()), ...t.slice(idx() + 1)])}
+              >
+                x
+              </button>
+            </div>
+          )}
+        </For>
       </section>
     </>
   );

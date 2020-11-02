@@ -1,14 +1,11 @@
-@import "bulma/css/bulma.min.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.title.is-1 {
-  margin-top: 1.5rem;
-  font-size: 6rem;
+.hover\:border-gray-600:hover {
+  z-index: 2;
 }
-.strikethrough {
-  text-decoration: line-through;
-}
-.disabled {
-  background-color: #f5f5f5;
-  box-shadow: none;
-  color: #7a7a7a;
+
+.focus\:shadow-outline:focus {
+  z-index: 3;
 }
