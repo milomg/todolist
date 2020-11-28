@@ -44,10 +44,11 @@ function copy() {
   fs.copy("public/", "build/");
 }
 
-watch("src/main.tsx").addListener("change", js);
-watch("src/style.css").addListener("change", css);
-watch("public/").on("change", copy);
-
+if (!production) {
+  watch("src/main.tsx").addListener("change", js);
+  watch("src/style.css").addListener("change", css);
+  watch("public/").on("change", copy);
+}
 if (production) {
   fs.rmSync("build/", { recursive: true, force: true });
   fs.mkdirSync("build/");
@@ -57,7 +58,9 @@ js();
 css();
 copy();
 
-console.log("starting server, production: ", production);
-servor({
-  root: "build",
-});
+if (!production) {
+  console.log("starting server, production: ", production);
+  servor({
+    root: "build",
+  });
+}
