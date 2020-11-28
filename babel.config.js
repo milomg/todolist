@@ -1,3 +1,3 @@
 module.exports = {
-  presets: ["solid", "@babel/preset-typescript"],
+  presets: ["@babel/preset-typescript", "solid"],
 };

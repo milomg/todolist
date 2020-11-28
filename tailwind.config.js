@@ -1,16 +1,10 @@
 module.exports = {
-  future: {
-    // removeDeprecatedGapUtilities: true,
-    // purgeLayersByDefault: true,
-  },
-  purge: {
-    mode: "all",
-    preserveHtmlElements: false,
-    content: ["./src/**/*.tsx", "./public/index.html"],
-  },
+  purge: ["src/main.tsx", "public/index.html"],
   theme: {
     extend: {},
   },
-  variants: {},
+  variants: {
+    zIndex: ['hover', 'focus'],
+  },
   plugins: [],
 };

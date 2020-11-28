@@ -1,4 +1,3 @@
-import "./style.css";
 import { onCleanup, createState, createEffect, createSignal } from "solid-js";
 import { render, For } from "solid-js/dom";
 import { SetStateFunction, State } from "solid-js/types";
@@ -46,7 +45,7 @@ const App = () => {
   });
   const [toggle, setToggle] = createSignal(false);
 
-  let timer: NodeJS.Timeout | undefined = undefined;
+  let timer: number | undefined = undefined;
 
   function beep() {
     if (isPaused(state.time)) return;
@@ -89,7 +88,7 @@ const App = () => {
   let createButton = (time: number, classes: string) => (
     <div class="control">
       <button
-        class={`bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-4 ${classes}`}
+        class={`bg-blue-100 hover:bg-blue-200 text-black py-2 px-4 ${classes}`}
         onClick={() => {
           setState("time", time * 60);
           setState("displayedNotification", false);
@@ -123,7 +122,7 @@ const App = () => {
         </div>
         <h1 style="font-size:6rem;font-weight:600;">{isPaused(state.time) ? displaySecs(state.time) : [toggle(), deltaDisplay(state.time)][1]}</h1>
         <button
-          class={`text-white py-2 px-4 rounded ${isPaused(state.time) ? "bg-green-500 hover:bg-green-700" : "bg-blue-500 hover:bg-blue-700"}`}
+          class="py-2 px-4 rounded text-white bg-blue-500 hover:bg-blue-700"
           onClick={() => {
             if (isPaused(state.time)) {
               setState("time", addSeconds(state.time));
@@ -141,7 +140,7 @@ const App = () => {
         <div class="inline-flex w-full pt-4 pb-4">
           <input
             type="text"
-            class="appearance-none border rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline border border-gray-500 hover:border-gray-600"
+            class="appearance-none border rounded-l w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 border-gray-200 hover:border-gray-300 hover:z-10"
             placeholder="enter a todo and click +"
             value={state.newTitle}
             onKeyDown={(e) => e.key == "Enter" && addTodo()}
@@ -155,7 +154,7 @@ const App = () => {
           {(todo, idx) => (
             <div class="inline-flex w-full" style="margin-bottom:-1px">
               <div
-                class="text-black py-2 px-4 rounded-l border border-gray-500 hover:border-gray-600"
+                class="text-black py-2 px-4 rounded-l border border-gray-200 hover:border-gray-300 hover:z-10"
                 classList={{ "bg-gray-200": todo.done }}
                 onClick={() => setState("todos", idx(), "done", (done) => !done)}
               >
@@ -163,7 +162,7 @@ const App = () => {
               </div>
               <input
                 type="text"
-                class="appearance-none border border-gray-500 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline hover:border-gray-600"
+                class="appearance-none border border-gray-200 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:z-20 hover:border-gray-300 hover:z-10"
                 classList={{
                   "bg-gray-200": todo.done,
                   "line-through": todo.done,
@@ -173,7 +172,7 @@ const App = () => {
                 onInput={(e) => setState("todos", idx(), { title: e.target.value })}
               ></input>
               <button
-                class="text-black py-2 px-4 rounded-r border border-gray-500 hover:border-gray-600"
+                class="text-black py-2 px-4 rounded-r border border-gray-200 hover:border-gray-300 hover:z-10"
                 classList={{ "bg-gray-200": todo.done }}
                 onClick={() => setState("todos", (t) => [...t.slice(0, idx()), ...t.slice(idx() + 1)])}
               >
