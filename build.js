@@ -21,7 +21,7 @@ async function css() {
       to: "style.css",
     });
 
-    fs.outputFile("build/style.css", result.css);
+    fs.outputFile("dist/style.css", result.css);
     console.log("css", Date.now() - time1);
   });
 }
@@ -34,14 +34,14 @@ async function js() {
   console.log("babel", Date.now() - time2);
   await build({
     stdin: { contents: output.code, resolveDir: path.resolve("./src") },
-    outfile: "build/main.js",
+    outfile: "dist/main.js",
     bundle: true,
     format: "iife",
   });
   console.log("esbuild", Date.now() - time2);
 }
 function copy() {
-  fs.copy("public/", "build/");
+  fs.copy("public/", "dist/");
 }
 
 if (!production) {
@@ -50,8 +50,8 @@ if (!production) {
   watch("public/").on("change", copy);
 }
 if (production) {
-  fs.rmSync("build/", { recursive: true, force: true });
-  fs.mkdirSync("build/");
+  fs.rmSync("dist/", { recursive: true, force: true });
+  fs.mkdirSync("dist/");
 }
 
 js();
@@ -61,6 +61,6 @@ copy();
 if (!production) {
   console.log("starting server, production: ", production);
   servor({
-    root: "build",
+    root: "dist",
   });
 }
