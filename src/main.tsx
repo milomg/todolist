@@ -1,6 +1,6 @@
-import { onCleanup, createState, createEffect, createSignal } from "solid-js";
-import { render, For } from "solid-js/dom";
-import { SetStateFunction, State } from "solid-js/types";
+import "windi.css";
+import { onCleanup, createState, createEffect, createSignal, SetStateFunction, State } from "solid-js";
+import { render, For } from "solid-js/web";
 
 function createLocalState<T>(initState: T): [State<T>, SetStateFunction<T>] {
   const [state, setState] = createState(initState);
@@ -78,7 +78,7 @@ const App = () => {
     }
     if (!isPaused(state.time)) {
       let offset = posmod(state.time.getTime() - Date.now(), 1000);
-      timer = setTimeout(tick, offset <= 1 ? 1000 : offset);
+      timer = setTimeout(tick as TimerHandler, offset <= 1 ? 1000 : offset);
     } else timer = undefined;
   };
 
@@ -144,7 +144,7 @@ const App = () => {
             placeholder="enter a todo and click +"
             value={state.newTitle}
             onKeyDown={(e) => e.key == "Enter" && addTodo()}
-            onInput={(e) => setState({ newTitle: e.target.value })}
+            onInput={(e) => setState({ newTitle: e.currentTarget.value })}
           ></input>
           <button class="text-white py-2 px-4 rounded-r bg-blue-500 hover:bg-blue-700" onClick={addTodo}>
             +
@@ -169,7 +169,7 @@ const App = () => {
                 }}
                 style="margin-left:-1px;margin-right:-1px;"
                 value={todo.title}
-                onInput={(e) => setState("todos", idx(), { title: e.target.value })}
+                onInput={(e) => setState("todos", idx(), { title: e.currentTarget.value })}
               ></input>
               <button
                 class="text-black py-2 px-4 rounded-r border border-gray-200 hover:border-gray-300 hover:z-10"
