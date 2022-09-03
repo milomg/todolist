@@ -1,5 +1,7 @@
-# todolist
+# Pomodoro Todo List
 
-25 min timer with todo list below. The timer and list persist through reloads
+A simple 25 min timer (with notifications) combined with a to-do list. 
 
-This uses [solid](https://github.com/ryansolid/solid) for components
+The timer and list persist down to the milisecond through reloads
+
+Made with [SolidJS](https://solidjs.com)

@@ -1,9 +1,10 @@
-import "windi.css";
-import { onCleanup, createState, createEffect, createSignal, SetStateFunction, State } from "solid-js";
-import { render, For } from "solid-js/web";
+import "virtual:windi.css";
+import { onCleanup, createEffect, createSignal, For } from "solid-js";
+import { createStore, SetStoreFunction } from "solid-js/store";
+import { render } from "solid-js/web";
 
-function createLocalState<T>(initState: T): [State<T>, SetStateFunction<T>] {
-  const [state, setState] = createState(initState);
+function createLocalState<T extends object>(initState: T): [T, SetStoreFunction<T>] {
+  const [state, setState] = createStore<T>(initState);
   if (localStorage.todos) {
     let parsed = JSON.parse(localStorage.todos);
     if (typeof parsed.time == "string") parsed.time = new Date(parsed.time);
